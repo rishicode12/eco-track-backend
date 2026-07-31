@@ -1,25 +1,31 @@
 package com.ecotrack.backend.service.impl;
 
-import com.ecotrack.backend.dto.LoginRequest; 
+import com.ecotrack.backend.dto.LoginRequest;
+import com.ecotrack.backend.dto.LoginResponse;
 import com.ecotrack.backend.dto.UserRegistrationRequest;
 import com.ecotrack.backend.entity.User;
 import com.ecotrack.backend.exception.EmailAlreadyExistsException;
 import com.ecotrack.backend.exception.ResourceNotFoundException;
 import com.ecotrack.backend.repository.UserRepository;
 import com.ecotrack.backend.service.UserService;
+import com.ecotrack.backend.utils.JwtUtil;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
 
 @Service
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final BCryptPasswordEncoder passwordEncoder; 
+    private final BCryptPasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
-    public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository,
+                           BCryptPasswordEncoder passwordEncoder,
+                           JwtUtil jwtUtil) {
+
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
     @Override
@@ -39,17 +45,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User loginUser(LoginRequest request) {
-      
+    public LoginResponse loginUser(LoginRequest request) {
+
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-      
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Invalid password");
         }
-        
-       
-        return user;
+
+        String token = jwtUtil.generateToken(user.getEmail());
+
+        return new LoginResponse(
+                token,
+                "Login Successful",
+                user.getEmail()
+        );
     }
 }
