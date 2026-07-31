@@ -1,12 +1,15 @@
 package com.ecotrack.backend.service.impl;
 
-import com.ecotrack.backend.dto.LoginRequest; // Naya import add kiya
+import com.ecotrack.backend.dto.LoginRequest; 
 import com.ecotrack.backend.dto.UserRegistrationRequest;
 import com.ecotrack.backend.entity.User;
+import com.ecotrack.backend.exception.EmailAlreadyExistsException;
+import com.ecotrack.backend.exception.ResourceNotFoundException;
 import com.ecotrack.backend.repository.UserRepository;
 import com.ecotrack.backend.service.UserService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -23,7 +26,7 @@ public class UserServiceImpl implements UserService {
     public User registerUser(UserRegistrationRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new EmailAlreadyExistsException("Email already exists");
         }
 
         User user = User.builder()
@@ -35,19 +38,18 @@ public class UserServiceImpl implements UserService {
         return userRepository.save(user);
     }
 
-    // YEH NAYA CODE HAI JO MISSING THA (Login ka logic)
     @Override
     public User loginUser(LoginRequest request) {
-        // 1. Pehle check karenge ki email database mein hai ya nahi
+      
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // 2. Phir check karenge ki password match ho raha hai ya nahi
+      
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Invalid password");
         }
         
-        // 3. Agar sab sahi hai, toh user return kardo
+       
         return user;
     }
 }
