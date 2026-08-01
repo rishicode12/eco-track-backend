@@ -24,4 +24,12 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Integer rewardPoints = 0;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private String badgeName = "Bronze";
 }
